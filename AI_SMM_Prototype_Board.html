@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI SMM — Прототип-доска</title>
+<style>
+  :root {
+    --bg: #F0EEE8;
+    --msg-bg: #EDEBE4;
+    --msg-border: #D0CEC7;
+    --btn-bg: #3E8CF0;
+    --btn-text: #fff;
+    --tech-bg: #E8F5E9;
+    --tech-border: #A5D6A7;
+    --tech-text: #2E7D32;
+    --ai-bg: #FFF8E1;
+    --ai-border: #FFD54F;
+    --ai-text: #E65100;
+    --section-bg: #534AB7;
+    --section-text: #fff;
+    --arrow: #AAAAAA;
+    --label: #888;
+    --dark: #2C2C2A;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    color: var(--dark);
+    padding: 0;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--section-bg);
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(83,74,183,0.25);
+  }
+  .topbar h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+  .topbar .sub { font-size: 11px; opacity: 0.75; }
+  .topbar .badge {
+    background: rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 11px;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    padding: 10px 32px;
+    background: #E8E6DE;
+    border-bottom: 1px solid var(--msg-border);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #666; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── BOARD SCROLL ── */
+  .board {
+    padding: 32px;
+    overflow-x: auto;
+    min-height: calc(100vh - 80px);
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 36px 0 16px;
+  }
+  .section-header:first-child { margin-top: 0; }
+  .section-label {
+    background: var(--section-bg);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 18px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .section-line { flex: 1; height: 1px; background: #C8C6BE; }
+
+  /* ── ROW OF BLOCKS ── */
+  .row {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  /* ── BLOCK WRAPPER ── */
+  .block-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  /* ── MESSAGE NODE ── */
+  .msg-node {
+    width: 240px;
+    background: var(--msg-bg);
+    border: 1.5px solid var(--msg-border);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .msg-node .node-label {
+    background: #D8D5CE;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #666;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .msg-node .node-text {
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--dark);
+    white-space: pre-wrap;
+  }
+  .msg-node .node-buttons {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .btn-block {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* ── SIDE NOTES COLUMN ── */
+  .side-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 8px;
+    flex-shrink: 0;
+    width: 200px;
+  }
+
+  /* ── TECH NOTE ── */
+  .note {
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.5;
+    box-shadow: var(--card-shadow);
+  }
+  .note-tech {
+    background: var(--tech-bg);
+    border: 1.5px solid var(--tech-border);
+    color: var(--tech-text);
+  }
+  .note-tech .note-title {
+    font-weight: 700;
+    font-size: 10px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .note-ai {
+    background: var(--ai-bg);
+    border: 1.5px solid var(--ai-border);
+    color: var(--ai-text);
+  }
+  .note-ai .note-title {
+    font-weight: 700;
+    font-size: 10px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ARROW ── */
+  .arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    color: var(--arrow);
+    font-size: 18px;
+    align-self: center;
+    flex-shrink: 0;
+    margin-top: -20px;
+  }
+  .arrow-label {
+    font-size: 9px;
+    color: #B00020;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .arrow-col { display: flex; flex-direction: column; align-items: center; }
+
+  /* ── VARIABLE TAG ── */
+  .var { background: #E3E0F8; color: #534AB7; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-family: monospace; font-weight: 600; }
+
+  /* ── GIF PLACEHOLDER ── */
+  .gif-placeholder {
+    background: #C8C5BC;
+    border-radius: 6px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #888;
+    margin: 6px 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ── BANNER PLACEHOLDER ── */
+  .banner-placeholder {
+    background: #D0CEC7;
+    border-radius: 6px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #888;
+    margin: 6px 10px 0;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  @media print {
+    .topbar { position: static; }
+    .board { padding: 16px; }
+    .row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="h1" style="font-size:16px;font-weight:700;color:#fff;">🤖 AI SMM — Прототип-доска</div>
+    <div class="sub">Готово к переносу в holst.so · MVP версия</div>
+  </div>
+  <div class="badge">БЛОК 0 — СТАРТ</div>
+  <div class="badge">БЛОК 1 — ОПЛАТА</div>
+  <div class="badge">БЛОК 2 — БРИФИНГ</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#EDEBE4;border:1.5px solid #D0CEC7"></div> Сообщение бота</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3E8CF0"></div> Кнопка</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9;border:1.5px solid #A5D6A7"></div> Тех. пометка</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FFF8E1;border:1.5px solid #FFD54F"></div> AI-промт</div>
+</div>
+
+<div class="board">
+
+<!-- ════════════════════════════════════════ -->
+<!-- БЛОК 0 — СТАРТ -->
+<!-- ════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-label">0️⃣ БЛОК 0 — СТАРТ</div>
+  <div class="section-line"></div>
+</div>
+
+<div class="row">
+
+  <!-- 0.1 GIF + первое сообщение -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 0.1</div>
+      <div class="gif-placeholder">GIF — аватар бота</div>
+      <div class="node-text">У тебя есть бизнес, экспертность или блог.
+
+Но контент — головная боль.
+
+Платишь SMM-специалисту, а посты выходят редко и не в твоём стиле.
+
+AI SMM — твой личный контент-отдел.
+Пишет посты, делает планы, адаптирует под площадки.
+Каждый день. Без выходных. Называет тебя Boss 😎
+
+Попробуем?</div>
+      <div class="node-buttons">
+        <div class="btn-block">🎁 Попробовать 7 дней — 99₽</div>
+        <div class="btn-block">⚡ Сразу месяц — 990₽</div>
+        <div class="btn-block">🏠 Главное меню</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        GIF отправляется первым сообщением, до текста.<br><br>
+        Обе кнопки сохраняют <span class="var">{{plan}}</span> и переходят к 0.2.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-col">
+    <div class="arrow">→</div>
+  </div>
+
+  <!-- 0.2 Запрос имени -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 0.2</div>
+      <div class="node-text">Отлично! Прежде чем перейти к оплате — как тебя зовут?</div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Свободный ввод. Сохраняется <span class="var">{{name}}</span>.<br><br>
+        Антидублирование: если пользователь уже есть → пропустить онбординг → БЛОК 3.<br><br>
+        После ввода имени → БЛОК 1.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- БЛОК 1 — ОПЛАТА -->
+<!-- ════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-label">💳 БЛОК 1 — ОПЛАТА</div>
+  <div class="section-line"></div>
+</div>
+
+<div class="row">
+
+  <!-- 1.1а trial -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 1.1а — plan=trial</div>
+      <div class="node-text"><span class="var">{{name}}</span>, отличный выбор для старта!
+
+За 7 дней и 99₽ ты:
+— настроишь бота под свой проект
+— создашь первые посты своим голосом
+— получишь контент-план на неделю
+
+Без риска. Просто попробуй.</div>
+      <div class="node-buttons">
+        <div class="btn-block">💳 Оплатить 99₽ и начать →</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Платёжная кнопка holst.so, сумма 99₽.<br><br>
+        ✅ Успех → 1.3<br>
+        ❌ Ошибка → 1.2
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-col">
+    <div class="arrow">→</div>
+  </div>
+
+  <!-- 1.1б month -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 1.1б — plan=month</div>
+      <div class="node-text"><span class="var">{{name}}</span>, месяц полного доступа — это:
+— неограниченные посты под любые площадки
+— контент-планы, адаптации, шаблоны
+— бот знает твой стиль и пишет как ты
+
+Всего 990₽ — меньше одного поста у фрилансера.</div>
+      <div class="node-buttons">
+        <div class="btn-block">💳 Оплатить 990₽ и начать →</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Платёжная кнопка holst.so, сумма 990₽.<br><br>
+        ✅ Успех → 1.3<br>
+        ❌ Ошибка → 1.2
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-col">
+    <div class="arrow-col">
+      <div class="arrow">→</div>
+      <div class="arrow-label">Ошибка оплаты</div>
+    </div>
+  </div>
+
+  <!-- 1.2 Ошибка оплаты -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 1.2 — ошибка</div>
+      <div class="node-text">Что-то пошло не так 🤔
+
+Попробуй ещё раз — обычно это техническая мелочь.
+
+Если не получается — напиши в поддержку, решим быстро.</div>
+      <div class="node-buttons">
+        <div class="btn-block">🔄 Попробовать снова</div>
+        <div class="btn-block">💬 Написать в поддержку → БЛОК 8</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-col">
+    <div class="arrow-col">
+      <div class="arrow">→</div>
+      <div class="arrow-label">Успех оплаты</div>
+    </div>
+  </div>
+
+  <!-- 1.3 Оплата прошла -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 1.3 — успех</div>
+      <div class="banner-placeholder">BANNER</div>
+      <div class="node-text">✅ Оплата прошла, Boss!
+
+Добро пожаловать.
+
+Сейчас за 5 минут настроим твой проект —
+и я буду писать именно твоим голосом для твоей аудитории.</div>
+      <div class="node-buttons">
+        <div class="btn-block">🚀 Настроить проект → БЛОК 2</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Фиксируется дата оплаты → <span class="var">{{plan_end_date}}</span>.<br><br>
+        Генерируется реферальный промокод → <span class="var">{{promo_code}}</span>.<br><br>
+        Переход → БЛОК 2 (брифинг).
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- БЛОК 2 — БРИФИНГ -->
+<!-- ════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-label">📋 БЛОК 2 — БРИФИНГ ПРОЕКТА</div>
+  <div class="section-line"></div>
+</div>
+
+<div class="row">
+
+  <!-- 2.1 Название проекта -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 2.1</div>
+      <div class="node-text">Как называется твой проект, канал или бренд?
+
+(Буду использовать название в текстах)</div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Свободный ввод. Сохраняется <span class="var">{{project_name}}</span>.<br><br>
+        Автопереход → 2.2.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- 2.2 Загрузка материала -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 2.2</div>
+      <div class="node-text">Теперь дай мне материал для обучения, Boss.
+
+Чем больше я знаю — тем точнее пишу 🎯</div>
+      <div class="node-buttons">
+        <div class="btn-block">📄 Загрузить .txt файл (до 300 КБ)</div>
+        <div class="btn-block">✍️ Написать о проекте текстом</div>
+        <div class="btn-block">🎤 Записать голосовое сообщение</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Файл .txt → содержимое → <span class="var">{{project_info}}</span><br>
+        Текст → свободный ввод → <span class="var">{{project_info}}</span><br>
+        Голос → Whisper API → <span class="var">{{project_info}}</span><br><br>
+        После любого варианта → 2.2а (подсказка).
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- 2.3 ЦА -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 2.3</div>
+      <div class="node-text">Отлично! Теперь — кто твоя аудитория?
+
+Кто эти люди, их боли, желания, возраст, чем занимаются.
+
+Это поможет попадать точно в цель при каждой генерации 🎯</div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Свободный ввод → <span class="var">{{audience}}</span>.<br><br>
+        Автопереход → 2.4.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- 2.4 AI-анализ -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 2.4</div>
+      <div class="node-text">⚙️ Принял всё, Boss! Изучаю твой проект и аудиторию...
+
+Это займёт около минуты 🔄</div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        Отправить AI промт P-1.<br>
+        Вход: <span class="var">{{project_info}}</span> + <span class="var">{{audience}}</span><br>
+        Выход: <span class="var">{{tov}}</span> + <span class="var">{{audience_short}}</span><br><br>
+        После ответа AI → автопереход 2.5.
+      </div>
+      <div class="note note-ai">
+        <div class="note-title">🤖 AI Промт P-1</div>
+        Анализ проекта и ЦА. Извлечь Tone of Voice и краткое описание аудитории для дальнейшей генерации контента.
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- 2.5 Результат -->
+  <div class="block-wrap">
+    <div class="msg-node">
+      <div class="node-label">💬 Сообщение 2.5</div>
+      <div class="node-text">✅ Готово! Вот что я понял о проекте «<span class="var">{{project_name}}</span>»:
+
+🎙 Стиль общения: <span class="var">{{tov}}</span>
+
+👥 Аудитория: <span class="var">{{audience_short}}</span>
+
+Всё верно?</div>
+      <div class="node-buttons">
+        <div class="btn-block">✅ Всё точно — к работе! → БЛОК 3</div>
+        <div class="btn-block">✏️ Хочу изменить → 2.1</div>
+      </div>
+    </div>
+    <div class="side-notes">
+      <div class="note note-tech">
+        <div class="note-title">⚙️ Тех. пометка</div>
+        «Всё точно» → БЛОК 3 (главное меню).<br><br>
+        «Изменить» → вернуть к 2.1, перезаписать переменные.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- НИЖНИЙ БЛОК: ПЕРЕМЕННЫЕ -->
+<!-- ════════════════════════════════════════ -->
+<div class="section-header" style="margin-top:40px;">
+  <div class="section-label">⚙️ ПЕРЕМЕННЫЕ ПРОЕКТА</div>
+  <div class="section-line"></div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;">
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{name}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{project_name}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{project_info}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{tov}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{audience}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{audience_short}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{platform}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{post_idea}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{post_angle}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{post_a}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{post_b}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{plan}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{plan_end_date}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{promo_code}}</span>
+  <span class="var" style="font-size:12px;padding:4px 10px;">{{referral_bonus}}</span>
+</div>
+
+</div><!-- /board -->
+</body>
+</html>
